@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IDrive e2 Bot Dashboard</title>
+<style>
+  :root { --bg:#0f172a; --card:#1e293b; --text:#e2e8f0; --muted:#94a3b8; --ok:#22c55e; --bad:#ef4444; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: system-ui, sans-serif; background:var(--bg); color:var(--text); padding:16px; }
+  .wrap { max-width: 900px; margin: 0 auto; }
+  h1 { font-size: 1.4rem; margin: 8px 0 16px; }
+  .grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(170px,1fr)); gap:12px; }
+  .card { background:var(--card); border-radius:12px; padding:14px; }
+  .label { color:var(--muted); font-size:.8rem; }
+  .value { font-size:1.3rem; font-weight:600; margin-top:4px; word-break:break-word; }
+  .dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; }
+  .on .dot { background:var(--ok); } .off .dot { background:var(--bad); }
+  h2 { font-size:1.1rem; margin:24px 0 8px; }
+  table { width:100%; border-collapse:collapse; background:var(--card); border-radius:12px; overflow:hidden; }
+  td { padding:10px 12px; border-bottom:1px solid #334155; font-size:.85rem; vertical-align:top; }
+  td:first-child { white-space:nowrap; color:var(--muted); }
+  .ok { text-align:center; color:var(--ok); }
+  button { background:#3b82f6; color:#fff; border:0; border-radius:8px; padding:10px 16px; font-size:.9rem; cursor:pointer; }
+  button:disabled { opacity:.6; cursor:wait; }
+  #testbox { margin-top:12px; }
+  .step { background:var(--card); border-radius:8px; padding:10px 12px; margin-top:6px; font-size:.85rem; word-break:break-word; }
+  .step.pass { border-left:4px solid var(--ok); } .step.fail { border-left:4px solid var(--bad); }
+  .foot { color:var(--muted); font-size:.75rem; margin-top:16px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🤖 IDrive e2 Bot Dashboard</h1>
+  <div class="grid">
+    <div class="card {{conn_class}}"><div class="label">Telegram connection</div><div class="value"><span class="dot"></span>{{conn_text}}</div></div>
+    <div class="card"><div class="label">Bot</div><div class="value">{{username}}</div></div>
+    <div class="card"><div class="label">Running time</div><div class="value" id="uptime">{{uptime}}</div></div>
+    <div class="card"><div class="label">Started</div><div class="value" style="font-size:.95rem">{{started}}</div></div>
+    <div class="card"><div class="label">Active jobs</div><div class="value">{{active}}</div></div>
+    <div class="card"><div class="label">Uploads to IDrive e2</div><div class="value">{{uploads}}</div></div>
+    <div class="card"><div class="label">Sent to Telegram</div><div class="value">{{downloads}}</div></div>
+    <div class="card"><div class="label">Errors</div><div class="value">{{error_count}}</div></div>
+    <div class="card"><div class="label">Storage</div><div class="value" style="font-size:1rem">{{storage}}</div></div>
+  </div>
+  <h2>IDrive e2 connection</h2>
+  <button id="testbtn" onclick="testStorage()">Test IDrive e2 connection</button>
+  <div id="testbox"></div>
+  <h2>Recent errors</h2>
+  <table>{{error_rows}}</table>
+  <div class="foot">Auto-refreshes every 10 seconds · <a style="color:var(--muted)" href="/api/status">JSON</a></div>
+</div>
+<script>
+let testing = false;
+async function testStorage() {
+  const btn = document.getElementById('testbtn'), box = document.getElementById('testbox');
+  testing = true; btn.disabled = true; btn.textContent = 'Testing...';
+  box.textContent = '';
+  try {
+    const r = await fetch('/api/test-storage', { method: 'POST' });
+    const d = await r.json();
+    const head = document.createElement('div');
+    head.className = 'step ' + (d.ok ? 'pass' : 'fail');
+    head.textContent = d.message ? d.message : ((d.ok ? '✅ IDrive e2 works' : '❌ IDrive e2 test failed') + ' · bucket: ' + d.account + ' · ' + d.seconds + 's');
+    box.appendChild(head);
+    (d.steps || []).forEach(s => {
+      const el = document.createElement('div');
+      el.className = 'step ' + (s.ok ? 'pass' : 'fail');
+      el.textContent = (s.ok ? '✅ ' : '❌ ') + s.step + ': ' + s.detail;
+      box.appendChild(el);
+    });
+  } catch (e) {
+    box.textContent = '❌ Test request failed: ' + e;
+  }
+  btn.disabled = false; btn.textContent = 'Test IDrive e2 connection'; testing = false;
+}
+// auto-refresh, but never while a test is running or its result is on screen
+setInterval(() => { if (!testing && !document.getElementById('testbox').textContent) location.reload(); }, 10000);
+</script>
+</body>
+</html>

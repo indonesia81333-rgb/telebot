@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: telegram-e2-bot
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: API_ID
+        sync: false
+      - key: API_HASH
+        sync: false
+      - key: BOT_TOKEN
+        sync: false
+      - key: E2_ENDPOINT
+        sync: false
+      - key: E2_ACCESS_KEY
+        sync: false
+      - key: E2_SECRET_KEY
+        sync: false
+      - key: E2_BUCKET
+        sync: false
+      - key: E2_REGION
+        value: us-east-1
+      - key: E2_PREFIX
+        sync: false
+      - key: LINK_EXPIRY_DAYS
+        value: "7"
+      - key: ALLOWED_USERS
+        sync: false
